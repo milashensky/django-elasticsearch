@@ -130,7 +130,11 @@ class EsModelToJsonMixin(object):
                     return self.nested_serialize(rel)
 
         try:
-            return getattr(instance, field_name)
+            val = getattr(instance, field_name)
+            if field.get_internal_type() in ['CharField', 'TextField']:
+                return str(val)
+            else:
+                return val
         except AttributeError:
             raise AttributeError("The serializer doesn't know how to serialize {0}, "
                                  "please provide it a {1} method."
@@ -145,7 +149,7 @@ class EsModelToJsonMixin(object):
             return obj
 
         # Fallback on a dict with id + __unicode__ value of the related model instance.
-        return dict(id=rel.pk, value=unicode(rel))
+        return dict(id=rel.pk, value=str(rel))
 
     def format(self, instance):
         # from a model instance to a dict

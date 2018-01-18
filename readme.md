@@ -1,33 +1,5 @@
-django_elasticsearch is a wrapper around py-elasticsearch that automates the indexation and search of django models.  
-**Note**: if your elasticsearch documents/mappings are not close to django models, this package is probably not for you.
+Updating of [liberation/django_elasticsearch.git](https://github.com/liberation/django_elasticsearch.git) for python3 and elasticsearch 6.x versions
 
-INSTALL
-=======
-* [Install and launch elasticsearch](http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/setup.html) if it's not done already.
-
-* Install [py-elasticsearch](http://www.elasticsearch.org/guide/en/elasticsearch/client/python-api/current/)
-    ```shell
-    pip install elasticsearch
-    ```
-
-* Install django_elasticsearch
-    ```shell
-    pip install git+https://github.com/liberation/django_elasticsearch.git
-    ```
-    **Note**: no pypy package yet
-
-
-ELASTICSEARCH VERSION COMPATIBILITY
-===================================
-
-As stated in the python elasticsearch module documentation:
-
-
->There are two branches for development - master and 0.4. Master branch is used to track all the changes for Elasticsearch 1.0 and beyond whereas 0.4 tracks Elasticsearch 0.90.
->
->Releases with major version 1 (1.X.Y) are to be used with Elasticsearch 1.* and later, 0.4 releases are meant to work with Elasticsearch 0.90.*.
-
-django_elasticsearch has only been tested with Elasticsearch 1.3.9 and it's corresponding python interface version 1.2.0, but since [the API hasn't change](https://elasticsearch-py.readthedocs.org/en/master/Changelog.html) i'm quite positive that newer and older versions should work fine too, as long as you use the right python module for your Elasticsearch version. [See the official docs on the matter](https://elasticsearch-py.readthedocs.org/en/master/#compatibility).
 
 USAGE
 =====
@@ -119,12 +91,12 @@ Each EsIndexable model receive an Elasticsearch class that contains its options 
     Defaults to None  
     You can override some or all of the fields mapping with this dictionary
     Example:  
-    
+
     ```python
 
     MyModel(EsIndexable, models.Model):
         title = models.CharField(max_length=64)
-        
+
         class Elasticsearch(EsIndexable.Elasticsearch):
             mappings = {'title': {'boost': 2.0}}
     ```

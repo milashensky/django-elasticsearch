@@ -30,7 +30,7 @@ ELASTICSEARCH_FIELD_MAP = {
     u'FloatField': 'double',
     u'IntegerField': 'long',
     u'PositiveIntegerField': 'long',
-    u'PositiveSmallIntegerField': 'short',
+    u'PositiveSmallIntegerField': 'long',
     u'SmallIntegerField': 'short',
 
     u'ForeignKey': 'object',
@@ -68,15 +68,15 @@ class ElasticsearchManager():
         self._mapping = None
 
     def get_index(self):
-        return self.model.Elasticsearch.index
+        index = self.model.Elasticsearch.index + '-' + self.doc_type
+        return index.lower()
 
     @property
     def index(self):
         return self.get_index()
 
     def get_doc_type(self):
-        return (self.model.Elasticsearch.doc_type
-                or 'model-{0}'.format(self.model.__name__))
+        return (self.model.Elasticsearch.doc_type or '{meta.app_label}-{meta.object_name}'.format(meta=self.model._meta))
 
     @property
     def doc_type(self):
@@ -87,7 +87,7 @@ class ElasticsearchManager():
 
     def get_serializer(self, **kwargs):
         serializer = self.model.Elasticsearch.serializer_class
-        if isinstance(serializer, basestring):
+        if isinstance(serializer, str):
             module, kls = self.model.Elasticsearch.serializer_class.rsplit(".", 1)
             mod = importlib.import_module(module)
             return getattr(mod, kls)(self.model, **kwargs)
@@ -191,7 +191,6 @@ class ElasticsearchManager():
         :arg suggest_limit
         :arg fuzziness
         """
-
         q = self.queryset
         q.fuzziness = fuzziness
 
@@ -208,6 +207,10 @@ class ElasticsearchManager():
             q = q.suggest(fields=suggest_fields, limit=suggest_limit)
 
         return q.query(query)
+
+    def search_queryset(self, query, **kwargs):
+        results = self.search(query, **kwargs)
+        return self.model.objects.filter(pk__in=[i.get('id', None) for i in results])
 
     # Convenience methods
     def all(self):
@@ -261,11 +264,11 @@ class ElasticsearchManager():
                 mapping = {}
             else:
                 mapping = {'type': ELASTICSEARCH_FIELD_MAP.get(
-                    field.get_internal_type(), 'string')}
+                    field.get_internal_type(), 'text')}
             try:
                 # if an analyzer is set as default, use it.
                 # TODO: could be also tokenizer, filter, char_filter
-                if mapping['type'] == 'string':
+                if mapping['type'] == 'text':
                     analyzer = settings.ELASTICSEARCH_SETTINGS['analysis']['default']
                     mapping['analyzer'] = analyzer
             except (ValueError, AttributeError, KeyError, TypeError):
@@ -332,7 +335,6 @@ class ElasticsearchManager():
         body = {}
         if hasattr(settings, 'ELASTICSEARCH_SETTINGS'):
             body['settings'] = settings.ELASTICSEARCH_SETTINGS
-
         es_client.indices.create(self.index,
                                  body=body,
                                  ignore=ignore and 400)

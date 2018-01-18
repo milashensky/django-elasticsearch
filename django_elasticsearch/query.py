@@ -130,11 +130,8 @@ class EsQueryset(QuerySet):
 
         if self._query:
             search['query'] = {
-                'match': {
-                    '_all': {
-                        'query': self._query,
-                        'fuzziness': fuzziness
-                    }
+                'query_string': {
+                    'query': self._query
                 },
             }
 
@@ -350,7 +347,7 @@ class EsQueryset(QuerySet):
         clone.filters.update(filters)
         return clone
 
-    ## getters
+    # getters
     def all(self):
         clone = self._clone()
         return clone
@@ -388,7 +385,7 @@ class EsQueryset(QuerySet):
                                      "completion": {
                                          "field": field_name,
                                          # stick to fuzziness settings
-                                         "fuzzy" : {}
+                                         "fuzzy": {}
                                      }}})
 
         return [r['text'] for r in resp[field_name][0]['options']]
