@@ -248,7 +248,13 @@ class ElasticsearchManager():
         model_fields = [f.name for f in self.model._meta.fields +
                         self.model._meta.many_to_many]
 
-        return self.model.Elasticsearch.fields or model_fields
+        fields = self.model.Elasticsearch.fields or model_fields
+        for field in self.model.Elasticsearch.unindexable_fields:
+            try:
+                fields.remove(field)
+            except ValueError:
+                pass
+        return fields
 
     def make_mapping(self):
         """

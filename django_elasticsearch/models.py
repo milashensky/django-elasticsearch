@@ -33,6 +33,7 @@ class EsIndexable(Model):
         fields = None
         facets_limit = 10
         facets_fields = None
+        unindexable_fields = []
         # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-suggesters-term.html
         suggest_fields = None
         # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-suggesters-completion.html
