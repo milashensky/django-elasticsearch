@@ -3,11 +3,6 @@ from django import get_version
 from django.conf import settings
 from django.db.models import Model
 from django.db.models.signals import post_save, post_delete
-try:
-    from django.db.models.signals import post_migrate
-except ImportError:  # django <= 1.6
-    from django.db.models.signals import post_syncdb as post_migrate
-
 from django.db.models.signals import class_prepared
 try:
     from django.db.models.signals import post_migrate
@@ -84,10 +79,11 @@ def es_syncdb_callback(sender, app=None, created_models=[], **kwargs):
         models = sender.get_models()
     else:
         models = created_models
-    
+
     for model in models:
         if issubclass(model, EsIndexable):
             model.es.create_index()
+            model.es.reindex_all()
 
 
 if getattr(settings, 'ELASTICSEARCH_AUTO_INDEX', False):
