@@ -6,7 +6,6 @@ from django.db.models.query import QuerySet
 from django.db.models.query import REPR_OUTPUT_SIZE
 
 from django_elasticsearch.client import es_client
-from django_elasticsearch.utils import nested_update
 
 
 class EsQueryset(QuerySet):
@@ -131,13 +130,14 @@ class EsQueryset(QuerySet):
         if self._query:
             search['query'] = {
                 'query_string': {
-                    'query': self._query
-                },
+                    'query': self._query,
+                    'fuzziness': fuzziness
+                }
             }
 
         if self.filters:
             # TODO: should we add _cache = true ?!
-            search['filter'] = {}
+            search_filter = {}
             mapping = self.model.es.get_mapping()
 
             for field, value in self.filters.items():
@@ -185,9 +185,14 @@ class EsQueryset(QuerySet):
                     else:
                         filtr = {'exists': {'field': field_name}}
 
-                nested_update(search['filter'], filtr)
+                search_filter.update(filtr)
 
-            body['query'] = {'filtered': search}
+            body['query'] = {
+                'bool': {
+                    "must": search.get('query'),
+                    "filter": search_filter
+                }
+            }
         else:
             body = search
 

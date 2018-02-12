@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-try:
-    import importlib
-except ImportError:  # python < 2.7
-    from django.utils import importlib
 
 from django.conf import settings
 try:
@@ -175,7 +171,7 @@ class ElasticsearchManager():
     def search(self, query,
                facets=None, facets_limit=None, global_facets=True,
                suggest_fields=None, suggest_limit=None,
-               fuzziness=None):
+               fuzziness=None, filters=None):
         """
         Returns a EsQueryset instance that acts a bit like a django Queryset
         facets is dictionnary containing facets informations
@@ -192,6 +188,8 @@ class ElasticsearchManager():
         :arg fuzziness
         """
         q = self.queryset
+        if filters:
+            q.filters = filters
         q.fuzziness = fuzziness
 
         if facets is None and self.model.Elasticsearch.facets_fields:
