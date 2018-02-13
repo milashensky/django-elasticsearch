@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from django import get_version
 from django.conf import settings
 from django.db.models import Model
@@ -11,6 +13,10 @@ except ImportError:  # django <= 1.6
 
 from django_elasticsearch.serializers import EsJsonSerializer
 from django_elasticsearch.managers import ElasticsearchManager
+
+from elasticsearch.exceptions import ConnectionError
+
+logger = logging.getLogger(__name__)
 
 
 class EsIndexable(Model):
@@ -65,13 +71,19 @@ def es_save_callback(sender, instance, **kwargs):
     # TODO: batch ?! @task ?!
     if not issubclass(sender, EsIndexable):
         return
-    instance.es.do_index()
+    try:
+        instance.es.do_index()
+    except ConnectionError:
+        logger.error("ElasticSearch is do not responding")
 
 
 def es_delete_callback(sender, instance, **kwargs):
     if not issubclass(sender, EsIndexable):
         return
-    instance.es.delete()
+    try:
+        instance.es.delete()
+    except ConnectionError:
+        logger.error("ElasticSearch is do not responding")
 
 
 def es_syncdb_callback(sender, app=None, created_models=[], **kwargs):
@@ -82,8 +94,11 @@ def es_syncdb_callback(sender, app=None, created_models=[], **kwargs):
 
     for model in models:
         if issubclass(model, EsIndexable):
-            model.es.create_index()
-            model.es.reindex_all()
+            try:
+                model.es.create_index()
+                model.es.reindex_all()
+            except ConnectionError:
+                logger.error("ElasticSearch is do not responding")
 
 
 if getattr(settings, 'ELASTICSEARCH_AUTO_INDEX', False):

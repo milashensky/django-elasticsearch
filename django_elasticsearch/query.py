@@ -27,6 +27,7 @@ class EsQueryset(QuerySet):
         self.extra_body = None
         self.facets_fields = None
         self.suggest_fields = None
+        self.search_fields = None
 
         # model.Elasticsearch.ordering -> model._meta.ordering -> _score
         if hasattr(self.model.Elasticsearch, 'ordering'):
@@ -128,12 +129,31 @@ class EsQueryset(QuerySet):
             fuzziness = self.fuzziness
 
         if self._query:
-            search['query'] = {
-                'query_string': {
-                    'query': self._query,
-                    'fuzziness': fuzziness
+            if self.search_fields and len(self.search_fields):
+                if len(self.search_fields) > 1:
+                    search['query'] = {
+                        'multi_match': {
+                            'query': self._query,
+                            'fields': [f for f in self.search_fields],
+                            'fuzziness': fuzziness
+                        }
+                    }
+                else:
+                    search['query'] = {
+                        'match': {
+                            self.search_fields[0]: {
+                                'query': self._query,
+                                'fuzziness': fuzziness
+                            }
+                        }
+                    }
+            else:
+                search['query'] = {
+                    'query_string': {
+                        'query': self._query,
+                        'fuzziness': fuzziness
+                    }
                 }
-            }
 
         if self.filters:
             # TODO: should we add _cache = true ?!
