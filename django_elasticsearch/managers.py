@@ -168,7 +168,7 @@ class ElasticsearchManager():
     def queryset(self):
         return EsQueryset(self.model)
 
-    def search(self, query,
+    def search(self, query, search_fields=[],
                facets=None, facets_limit=None, global_facets=True,
                suggest_fields=None, suggest_limit=None,
                fuzziness=None, filters=None):
@@ -190,6 +190,11 @@ class ElasticsearchManager():
         q = self.queryset
         if filters:
             q.filters = filters
+        if search_fields and hasattr(search_fields, "__len__"):
+            if isinstance(search_fields, str):
+                q.search_fields = [search_fields]
+            else:
+                q.search_fields = search_fields
         q.fuzziness = fuzziness
 
         if facets is None and self.model.Elasticsearch.facets_fields:
