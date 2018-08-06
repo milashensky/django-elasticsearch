@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import requests
 
 from django import get_version
 from django.conf import settings
@@ -14,7 +15,7 @@ except ImportError:  # django <= 1.6
 from django_elasticsearch.serializers import EsJsonSerializer
 from django_elasticsearch.managers import ElasticsearchManager
 
-from elasticsearch.exceptions import ConnectionError
+from elasticsearch.exceptions import ConnectionError as ElasticConnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ class EsIndexable(Model):
         completion_fields = None
 
     def __init__(self, *args, **kwargs):
-        super(EsIndexable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # override the manager because we have an instance now
         self.es = ElasticsearchManager(self)
 
@@ -64,6 +65,8 @@ def add_es_manager(sender, **kwargs):
     # Note: the manager needs to know the subclass
     if issubclass(sender, EsIndexable):
         sender.es = ElasticsearchManager(sender)
+
+
 class_prepared.connect(add_es_manager)
 
 
@@ -72,18 +75,20 @@ def es_save_callback(sender, instance, **kwargs):
     if not issubclass(sender, EsIndexable):
         return
     try:
+        requests.get(settings.ELASTICSEARCH_URL, timeout=getattr(settings, 'ELASTICSEARCH_MAX_TIMEOUT', None))
         instance.es.do_index()
-    except ConnectionError:
-        logger.error("ElasticSearch is do not responding")
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, ElasticConnectionError) as e:
+        logger.error("ElasticSearch is do not responding, %s" % e)
 
 
 def es_delete_callback(sender, instance, **kwargs):
     if not issubclass(sender, EsIndexable):
         return
     try:
+        requests.get(settings.ELASTICSEARCH_URL, timeout=getattr(settings, 'ELASTICSEARCH_MAX_TIMEOUT', None))
         instance.es.delete()
-    except ConnectionError:
-        logger.error("ElasticSearch is do not responding")
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, ElasticConnectionError) as e:
+        logger.error("ElasticSearch is do not responding, %s" % e)
 
 
 def es_syncdb_callback(sender, app=None, created_models=[], **kwargs):
@@ -95,10 +100,11 @@ def es_syncdb_callback(sender, app=None, created_models=[], **kwargs):
     for model in models:
         if issubclass(model, EsIndexable):
             try:
+                requests.get(settings.ELASTICSEARCH_URL, timeout=getattr(settings, 'ELASTICSEARCH_MAX_TIMEOUT', None))
                 model.es.create_index()
                 model.es.reindex_all()
-            except ConnectionError:
-                logger.error("ElasticSearch is do not responding")
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, ElasticConnectionError) as e:
+                logger.error("ElasticSearch is do not responding, %s" % e)
 
 
 if getattr(settings, 'ELASTICSEARCH_AUTO_INDEX', False):
