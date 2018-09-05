@@ -201,9 +201,9 @@ class EsQueryset(QuerySet):
 
                 elif operator == 'isnull':
                     if value:
-                        filtr = {'missing': {'field': field_name}}
+                        filtr = {'bool': {'must_not': [{'exists': {'field': field_name}}]}}
                     else:
-                        filtr = {'exists': {'field': field_name}}
+                        filtr = {'bool': {'must': [{'exists': {'field': field_name}}]}}
 
                 search_filter.update(filtr)
 
