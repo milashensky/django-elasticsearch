@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: django-elasticsearch
+Version: 0.5
+Summary: Simple wrapper around py-elasticsearch to index/search a django Model.
+Home-page: https://github.com/liberation/django_elasticsearch
+Author: Robin Tissot
+Author-email: UNKNOWN
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN

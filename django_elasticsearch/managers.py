@@ -119,14 +119,14 @@ class ElasticsearchManager():
     def do_index(self):
         body = self.serialize()
         es_client.index(index=self.index,
-                        doc_type=self.doc_type,
+                        # doc_type=self.doc_type,
                         id=self.instance.id,
                         body=body)
 
     @needs_instance
     def delete(self):
         es_client.delete(index=self.index,
-                         doc_type=self.doc_type,
+                         # doc_type=self.doc_type,
                          id=self.instance.id,
                          ignore=404)
 
@@ -264,7 +264,6 @@ class ElasticsearchManager():
         Create the model's es mapping on the fly
         """
         mappings = {}
-
         for field_name in self.get_fields():
             try:
                 field = self.model._meta.get_field(field_name)
@@ -295,17 +294,16 @@ class ElasticsearchManager():
             mappings[complete_name] = {"type": "completion"}
 
         return {
-            self.doc_type: {
-                "properties": mappings
-            }
+            "properties": mappings
         }
 
     def get_mapping(self):
         if self._mapping is None:
             # TODO: could be done once for every index/doc_type ?
             full_mapping = es_client.indices.get_mapping(index=self.index,
-                                                         doc_type=self.doc_type)
-            self._mapping = full_mapping[self.index]['mappings'][self.doc_type]['properties']
+                                                         # doc_type=self.doc_type
+                                                         )
+            self._mapping = full_mapping[self.index]['mappings']['properties']
 
         return self._mapping
 
@@ -348,7 +346,7 @@ class ElasticsearchManager():
                                  body=body,
                                  ignore=ignore and 400)
         es_client.indices.put_mapping(index=self.index,
-                                      doc_type=self.doc_type,
+                                      # doc_type=self.doc_type,
                                       body=self.make_mapping())
 
     def reindex_all(self, queryset=None):

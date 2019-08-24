@@ -264,7 +264,7 @@ class EsQueryset(QuerySet):
 
         search_params = {
             'index': self.index,
-            'doc_type': self.doc_type
+            # 'doc_type': self.doc_type
         }
         if self._start:
             search_params['from'] = self._start
