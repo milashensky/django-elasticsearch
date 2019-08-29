@@ -115,7 +115,7 @@ class EsModelToJsonMixin(object):
             if hasattr(self, field_type_method_name):
                 return getattr(self, field_type_method_name)(instance, field_name)
 
-            if field.rel:
+            if hasattr(field, 'rel') and getattr(field, 'rel'):
                 # M2M
                 if isinstance(field, ManyToManyField):
                     return [self.nested_serialize(r)
